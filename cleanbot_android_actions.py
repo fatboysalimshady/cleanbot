@@ -1,10 +1,8 @@
 from flask import Flask, request
 from threading import Thread
 import broadlink
-from kivy.app import App
-from kivy.uix.textinput import TextInput
 
-broadlink_ip = '192.168.7.253'
+broadlink_ip = '192.168.69.122'
 
 
 device = broadlink.hello(broadlink_ip)  # IP address of your Broadlink device.
@@ -38,52 +36,37 @@ def take_action(action):
         return print(f"{action} is not a valid option")
 
 
-class MyApp(App):
-    host = '0.0.0.0'
-    port = 5000
+# Flask app setup
+app = Flask(__name__)
 
-    def build(self):
-        self.log_text = TextInput(multiline=True, text='Starting\n')
-        Thread(target=self.start_flask).start()
-        self.log_text.insert_text('Flask listening on %s:%s\n' % (self.host,
-                                                                  self.port))
-        return self.log_text
+@app.route('/motion', methods=['POST'])
+def handle_motion():
+    motion = request.json.get('motion')
+    response = play_motion_from_api(motion)
+    return f'Motion {motion} executed with {response}'
 
-    def start_flask(self):
-        self.flask_app = Flask(__name__)
+def play_motion_from_api(motion):
+    if motion == "forward":
+        take_action("forward")
+        return "Robot moving forward"
+    elif motion == "backward":
+        take_action("backward")
+        return "Robot moving backward"
+    elif motion == "rotate_left":
+        take_action("rotate_left")
+        return "Robot turning left"
+    elif motion == "rotate_right":
+        take_action("rotate_right")
+        return "Robot rotating right"
+    elif motion == "dog_found":
+        take_action("dog_found")
+        return "Robot found dog"
+    else:
+        return "Invalid motion"
 
-        # Define your robot control function
-        def play_motion_from_api(motion):
-            # Here, you would implement the logic to control your robot based on the motion provided
-            if motion == "forward":
-                take_action("forward")
-                return "Robot moving forward"
-            elif motion == "backward":
-                take_action("backward")
-                return "Robot moving backward"
-            elif motion == "rotate_left":
-                take_action("rotate_left")
-                return "Robot turning left"
-            elif motion == "rotate_right":
-                take_action("rotate_right")
-                return "Robot Rotating right"
-            elif motion == "rotate_right":
-                take_action("dog_found")
-                return "Robot found dog"
-            else:
-                # Handle invalid motion
-                return "Invalid motion"
-# Define a route to handle motion requests
-        @self.flask_app.route('/motion', methods=['POST'])
-        def handle_motion():
-            # Get the motion from the request
-            motion = request.json.get('motion')
-            # Call the play_motion function with the specified motion
-            response = play_motion_from_api(motion)
-            return f'Motion {motion} executed with {response}'
+def start_flask():
+    app.run(host='0.0.0.0', port=5000)
 
-        self.flask_app.run(host=self.host, port=self.port)
-
-
-if __name__ == '__main__':
-    MyApp().run()
+# Start Flask in a separate thread
+flask_thread = Thread(target=start_flask)
+flask_thread.start()
