@@ -2,7 +2,7 @@ from flask import Flask, request
 from threading import Thread
 import broadlink
 
-broadlink_ip = '192.168.69.122'
+broadlink_ip = '10.10.2.137'
 
 
 device = broadlink.hello(broadlink_ip)  # IP address of your Broadlink device.
